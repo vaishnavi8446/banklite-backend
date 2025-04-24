@@ -1,9 +1,21 @@
-import { Controller, Post, Body, Get, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Request,
+  Patch,
+  NotFoundException,
+  Param,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { User } from './entities/user.entity';
+import { Role, User } from './entities/user.entity';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+
+import { Roles } from '../roles/roles.decorator';
+import { RolesGuard } from '../roles/roles.guard';
 
 @Controller('users')
 export class UsersController {
@@ -24,5 +36,22 @@ export class UsersController {
   @Get('me')
   getMe(@Request() req) {
     return req.user;
+  }
+
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
+  @Get('admin-dashboard')
+  getAdminData() {
+    return 'This is admin data';
+  }
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
+  @Patch(':id/role')
+  async updateRole(@Param('id') id: string, @Body() body: { role: Role }) {
+    const user = await this.usersService.findById(id);
+    if (!user) throw new NotFoundException('User not found');
+
+    user.role = body.role;
+    return this.usersService.updateUser(user);
   }
 }
