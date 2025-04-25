@@ -17,6 +17,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../roles/roles.decorator';
 import { RolesGuard } from '../roles/roles.guard';
 
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+
+@ApiTags('User APIs')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -32,6 +35,7 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
   getMe(@Request() req) {
@@ -44,6 +48,7 @@ export class UsersController {
   getAdminData() {
     return 'This is admin data';
   }
+
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin')
   @Patch(':id/role')

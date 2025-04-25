@@ -3,7 +3,10 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  OneToMany,
 } from 'typeorm';
+
+import { Account } from '../../accounts/entities/account.entity';
 
 export enum Role {
   ADMIN = 'admin',
@@ -34,6 +37,9 @@ export class User {
     default: Role.CUSTOMER,
   })
   role: Role;
+
+  @OneToMany(() => Account, (account) => account.user)
+  accounts: Account[];
 
   @CreateDateColumn()
   createdAt: Date;
