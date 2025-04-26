@@ -14,11 +14,21 @@ export class AccountsService {
   ) {}
 
   async openAccount(createDto: CreateAccountDto, user: User): Promise<Account> {
+    console.log('begin', createDto, user);
     const account = this.accountRepo.create({
       ...createDto,
       user,
+      balance: createDto.initialDeposit || 0, // 👈 set initial balance
       accountNumber: `ACC-${uuidv4().split('-')[0]}`,
     });
+    console.log('acc', account);
     return this.accountRepo.save(account);
+  }
+
+  async getAccountsForUser(userId: string): Promise<Account[]> {
+    return this.accountRepo.find({
+      where: { user: { id: userId } },
+      relations: ['user'],
+    });
   }
 }

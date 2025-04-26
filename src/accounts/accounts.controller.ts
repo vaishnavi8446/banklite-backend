@@ -1,4 +1,11 @@
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  Get,
+} from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -14,5 +21,10 @@ export class AccountsController {
   @Post('open')
   openAccount(@Body() body: CreateAccountDto, @Request() req) {
     return this.accountsService.openAccount(body, req.user);
+  }
+
+  @Get()
+  async listUserAccounts(@Request() req) {
+    return this.accountsService.getAccountsForUser(req.user.id);
   }
 }
