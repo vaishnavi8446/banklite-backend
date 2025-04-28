@@ -25,7 +25,14 @@ export class AccountsService {
     return this.accountRepo.save(account);
   }
 
-  async getAccountsForUser(userId: string): Promise<Account[]> {
+  async getAllAccounts() {
+    return this.accountRepo.find({
+      relations: ['user'],
+    });
+  }
+
+  // ✅ List accounts for logged-in user
+  async getAccountsForUser(userId: string) {
     return this.accountRepo.find({
       where: { user: { id: userId } },
       relations: ['user'],
