@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Account, AccountType } from './entities/account.entity';
+import { Account } from './entities/account.entity';
 import { Repository } from 'typeorm';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { User } from '../users/entities/user.entity';
@@ -11,17 +11,23 @@ export class AccountsService {
   constructor(
     @InjectRepository(Account)
     private accountRepo: Repository<Account>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
   ) {}
 
   async openAccount(createDto: CreateAccountDto, user: User): Promise<Account> {
-    console.log('begin', createDto, user);
+    console.log('begin', createDto, user.id);
+    const userData = await this.userRepo.findOne({ where: { id: user.id } });
+    if (!userData) {
+      throw new Error('User not found');
+    }
+
     const account = this.accountRepo.create({
       ...createDto,
       user,
-      balance: createDto.initialDeposit || 0, // 👈 set initial balance
+      balance: createDto.initialDeposit || 0,
       accountNumber: `ACC-${uuidv4().split('-')[0]}`,
     });
-    console.log('acc', account);
     return this.accountRepo.save(account);
   }
 
