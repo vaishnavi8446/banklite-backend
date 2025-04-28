@@ -23,4 +23,5 @@ export class Account {
 
   @ManyToOne(() => User, (user) => user.accounts)
   user: User;
+  transactions: any;
 }
