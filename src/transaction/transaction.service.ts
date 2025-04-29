@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Transaction, TransactionType } from './entities/transaction.entity';
 import { Account } from '../accounts/entities/account.entity';
 
@@ -16,12 +16,15 @@ export class TransactionsService {
 
     @InjectRepository(Account)
     private readonly accountRepo: Repository<Account>,
+
+    private dataSource: DataSource,
   ) {}
 
   // Deposit money
   async deposit(accountId: string, amount: number) {
-    if (amount <= 0) {
-      throw new BadRequestException('Amount must be greater than zero');
+    const numericAmount = Number(amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      throw new BadRequestException('Amount must be a valid positive number');
     }
 
     const account = await this.accountRepo.findOne({
@@ -31,21 +34,22 @@ export class TransactionsService {
       throw new NotFoundException('Account not found');
     }
 
-    account.balance += amount;
+    account.balance += numericAmount;
     await this.accountRepo.save(account);
 
     const transaction = this.transactionRepo.create({
       account,
       type: TransactionType.DEPOSIT,
-      amount,
+      amount: numericAmount,
     });
     return this.transactionRepo.save(transaction);
   }
 
   // Withdraw money
   async withdraw(accountId: string, amount: number) {
-    if (amount <= 0) {
-      throw new BadRequestException('Amount must be greater than zero');
+    const numericAmount = Number(amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      throw new BadRequestException('Amount must be a valid positive number');
     }
 
     const account = await this.accountRepo.findOne({
@@ -55,18 +59,62 @@ export class TransactionsService {
       throw new NotFoundException('Account not found');
     }
 
-    if (account.balance < amount) {
+    if (account.balance < numericAmount) {
       throw new BadRequestException('Insufficient balance');
     }
 
-    account.balance -= amount;
+    account.balance -= numericAmount;
     await this.accountRepo.save(account);
 
     const transaction = this.transactionRepo.create({
       account,
       type: TransactionType.WITHDRAW,
-      amount,
+      amount: numericAmount,
     });
     return this.transactionRepo.save(transaction);
+  }
+
+  // Transfer between accounts
+  async transferFunds(
+    fromAccountId: string,
+    toAccountId: string,
+    amount: number,
+  ) {
+    const numericAmount = Number(amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      throw new BadRequestException('Amount must be a valid positive number');
+    }
+
+    await this.dataSource.transaction(async (manager) => {
+      const fromAccount = await manager.findOne(Account, {
+        where: { id: fromAccountId },
+      });
+      const toAccount = await manager.findOne(Account, {
+        where: { id: toAccountId },
+      });
+
+      if (!fromAccount || !toAccount) {
+        throw new NotFoundException('Source or destination account not found');
+      }
+
+      if (fromAccount.balance < numericAmount) {
+        throw new BadRequestException('Insufficient balance');
+      }
+
+      fromAccount.balance -= numericAmount;
+      toAccount.balance += numericAmount;
+
+      await manager.save(fromAccount);
+      await manager.save(toAccount);
+
+      const transaction = this.transactionRepo.create({
+        amount: numericAmount,
+        fromAccount,
+        toAccount,
+        type: TransactionType.TRANSFER,
+      });
+      const data = await manager.save(transaction);
+      return { message: 'Transfer successful' };
+    });
   }
 }

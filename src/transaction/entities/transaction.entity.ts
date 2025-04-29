@@ -10,6 +10,7 @@ import { Account } from '../../accounts/entities/account.entity';
 export enum TransactionType {
   DEPOSIT = 'deposit',
   WITHDRAW = 'withdraw',
+  TRANSFER = 'TRANSFER',
 }
 
 @Entity()
@@ -20,8 +21,14 @@ export class Transaction {
   @Column({ type: 'enum', enum: TransactionType })
   type: TransactionType;
 
-  @Column({ type: 'decimal', precision: 12, scale: 2 })
+  @Column({ type: 'decimal' })
   amount: number;
+
+  @ManyToOne(() => Account, { nullable: true })
+  fromAccount: Account;
+
+  @ManyToOne(() => Account, { nullable: true })
+  toAccount: Account;
 
   @ManyToOne(() => Account, (account) => account.transactions)
   account: Account;

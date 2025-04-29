@@ -4,11 +4,13 @@ import {
   Body,
   Param,
   BadRequestException,
+  Request,
 } from '@nestjs/common';
 import { TransactionsService } from './transaction.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DepositDto } from './dto/deposit.dto';
 import { WithdrawDto } from './dto/withdraw.dto';
+import { TransferDto } from './dto/transfer.dto';
 
 @ApiTags('Transactions')
 @Controller('transactions')
@@ -55,5 +57,16 @@ export class TransactionsController {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+
+  @Post('transfer')
+  async transfer(
+    @Body() transferDto: TransferDto,
+  ) {
+    return this.transactionsService.transferFunds(
+      transferDto.fromAccountId,
+      transferDto.toAccountId,
+      transferDto.amount,
+    );
   }
 }
