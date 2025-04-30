@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Between, DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { Transaction, TransactionType } from './entities/transaction.entity';
 import { Account } from '../accounts/entities/account.entity';
 
@@ -115,6 +115,36 @@ export class TransactionsService {
       });
       const data = await manager.save(transaction);
       return { message: 'Transfer successful' };
+    });
+  }
+
+  async getTransactionHistory(filters: {
+    accountId?: string;
+    type?: TransactionType;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    const where: FindOptionsWhere<Transaction> = {};
+
+    if (filters.accountId) {
+      where.account = { id: filters.accountId };
+    }
+
+    if (filters.type) {
+      where.type = filters.type;
+    }
+
+    if (filters.startDate && filters.endDate) {
+      where.createdAt = Between(
+        new Date(filters.startDate),
+        new Date(filters.endDate),
+      );
+    }
+
+    return this.transactionRepo.find({
+      where,
+      relations: ['account', 'fromAccount', 'toAccount'],
+      order: { createdAt: 'DESC' },
     });
   }
 }

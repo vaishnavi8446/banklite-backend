@@ -5,12 +5,15 @@ import {
   Param,
   BadRequestException,
   Request,
+  Get,
+  Query,
 } from '@nestjs/common';
 import { TransactionsService } from './transaction.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DepositDto } from './dto/deposit.dto';
 import { WithdrawDto } from './dto/withdraw.dto';
 import { TransferDto } from './dto/transfer.dto';
+import { TransactionType } from './entities/transaction.entity';
 
 @ApiTags('Transactions')
 @Controller('transactions')
@@ -60,13 +63,26 @@ export class TransactionsController {
   }
 
   @Post('transfer')
-  async transfer(
-    @Body() transferDto: TransferDto,
-  ) {
+  async transfer(@Body() transferDto: TransferDto) {
     return this.transactionsService.transferFunds(
       transferDto.fromAccountId,
       transferDto.toAccountId,
       transferDto.amount,
     );
+  }
+
+  @Get('history')
+  async getHistory(
+    @Query('accountId') accountId?: string,
+    @Query('type') type?: TransactionType,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.transactionsService.getTransactionHistory({
+      accountId,
+      type,
+      startDate,
+      endDate,
+    });
   }
 }
