@@ -14,6 +14,12 @@ export enum Role {
   CUSTOMER = 'customer',
 }
 
+export enum KycStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+}
+
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -43,4 +49,13 @@ export class User {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @Column({ type: 'enum', enum: KycStatus, default: KycStatus.PENDING })
+  kycStatus: KycStatus;
+
+  @Column({ nullable: true })
+  kycPanPath: string;
+
+  @Column({ nullable: true })
+  kycAadharPath: string;
 }
