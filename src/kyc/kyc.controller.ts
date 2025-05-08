@@ -5,6 +5,7 @@ import {
   UploadedFiles,
   UseGuards,
   Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -52,5 +53,22 @@ export class KycController {
     @Body() body: { status: KycStatus },
   ) {
     return this.kycService.updateKycStatus(userId, body.status);
+  }
+
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
+  @Patch('update-status')
+  async sendKycStatusEmail(
+    @Body('userId') userId: string,
+    @Body('status') status: KycStatus,
+    @Request() req,
+  ) {
+    if (status !== KycStatus.APPROVED && status !== KycStatus.REJECTED) {
+      throw new ForbiddenException(
+        'Invalid status. Must be APPROVED or REJECTED',
+      );
+    }
+
+    return this.kycService.updateKycStatus(userId, status);
   }
 }

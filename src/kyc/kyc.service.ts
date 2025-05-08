@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { MailService } from 'src/mail/mail.service';
 import { KycStatus, User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 
@@ -8,6 +9,7 @@ export class KycService {
   constructor(
     @InjectRepository(User)
     private userRepo: Repository<User>,
+    private mailService: MailService,
   ) {}
 
   async handleKycUpload(userId: string, files: Express.Multer.File[]) {
@@ -27,6 +29,7 @@ export class KycService {
 
     user.kycStatus = status;
     await this.userRepo.save(user);
+    await this.mailService.sendKycStatusEmail(user.email, status);
 
     return { message: `KYC ${status}` };
   }

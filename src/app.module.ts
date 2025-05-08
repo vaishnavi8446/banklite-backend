@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { KycModule } from './kyc/kyc.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { KycModule } from './kyc/kyc.module';
     AccountsModule,
     TransactionModule,
     KycModule,
+    MailModule,
   ],
 })
 export class AppModule {}
